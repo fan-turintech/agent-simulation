@@ -57,50 +57,50 @@ def create_test_simulation(scenario_name):
     scenario = SCENARIOS[scenario_name]
     
     # Create new simulation
-    simulation = Simulation()
+    simulation = Simulation(scenario["grass"], scenario["herbivores"], scenario["carnivores"])
     
-    # Reset creature list
-    simulation.creatures = []
-    
-    # Create herbivores with fixed positions
-    for i in range(scenario["herbivores"]):
-        # Deterministic positioning for reproducibility
-        x = Config.SCREEN_WIDTH * (0.1 + 0.8 * i / max(1, scenario["herbivores"]))
-        y = Config.SCREEN_HEIGHT * 0.3
-        direction = (i * 30) % 360  # Deterministic directions
-        herbivore = Herbivore(x, y, direction=direction)
-        simulation.creatures.append(herbivore)
-    
-    # Create carnivores with fixed positions
-    for i in range(scenario["carnivores"]):
-        # Deterministic positioning for reproducibility
-        x = Config.SCREEN_WIDTH * (0.2 + 0.6 * i / max(1, scenario["carnivores"]))
-        y = Config.SCREEN_HEIGHT * 0.7
-        direction = (i * 45) % 360  # Deterministic directions
-        carnivore = Carnivore(x, y, direction=direction)
-        simulation.creatures.append(carnivore)
-    
-    # Reset environment
-    simulation.environment.grass = []
-    simulation.environment.grass_positions = set()
-    
-    # Create grass in a deterministic grid pattern
-    grid_size = int(math.sqrt(scenario["grass"]))
-    cell_width = Config.SCREEN_WIDTH / (grid_size + 1)
-    cell_height = Config.SCREEN_HEIGHT / (grid_size + 1)
-    
-    for i in range(grid_size):
-        for j in range(grid_size):
-            if len(simulation.environment.grass) < scenario["grass"]:
-                x = cell_width * (i + 1)
-                y = cell_height * (j + 1)
-                grass = Grass(x, y)
-                simulation.environment.grass.append(grass)
-                
-                # Add to position tracking
-                pos_key = (int(x) // simulation.environment.grid_size, 
-                           int(y) // simulation.environment.grid_size)
-                simulation.environment.grass_positions.add(pos_key)
+    # # Reset creature list
+    # simulation.creatures = []
+    #
+    # # Create herbivores with fixed positions
+    # for i in range(scenario["herbivores"]):
+    #     # Deterministic positioning for reproducibility
+    #     x = Config.SCREEN_WIDTH * (0.1 + 0.8 * i / max(1, scenario["herbivores"]))
+    #     y = Config.SCREEN_HEIGHT * 0.3
+    #     direction = (i * 30) % 360  # Deterministic directions
+    #     herbivore = Herbivore(x, y, direction=direction)
+    #     simulation.creatures.append(herbivore)
+    #
+    # # Create carnivores with fixed positions
+    # for i in range(scenario["carnivores"]):
+    #     # Deterministic positioning for reproducibility
+    #     x = Config.SCREEN_WIDTH * (0.2 + 0.6 * i / max(1, scenario["carnivores"]))
+    #     y = Config.SCREEN_HEIGHT * 0.7
+    #     direction = (i * 45) % 360  # Deterministic directions
+    #     carnivore = Carnivore(x, y, direction=direction)
+    #     simulation.creatures.append(carnivore)
+    #
+    # # Reset environment
+    # simulation.environment.grass = []
+    # simulation.environment.grass_positions = set()
+    #
+    # # Create grass in a deterministic grid pattern
+    # grid_size = int(math.sqrt(scenario["grass"]))
+    # cell_width = Config.SCREEN_WIDTH / (grid_size + 1)
+    # cell_height = Config.SCREEN_HEIGHT / (grid_size + 1)
+    #
+    # for i in range(grid_size):
+    #     for j in range(grid_size):
+    #         if len(simulation.environment.grass) < scenario["grass"]:
+    #             x = cell_width * (i + 1)
+    #             y = cell_height * (j + 1)
+    #             grass = Grass(x, y)
+    #             simulation.environment.grass.append(grass)
+    #
+    #             # Add to position tracking
+    #             pos_key = (int(x) // simulation.environment.grid_size,
+    #                        int(y) // simulation.environment.grid_size)
+    #             simulation.environment.grass_positions.add(pos_key)
     
     return simulation
 

@@ -26,6 +26,9 @@ class Creature:
         
         # Movement properties
         self.speed = 0
+
+    def __repr__(self):
+        return f"location: ({self.x}, {self.y}), direction: {self.direction}, energy: {self.energy}"
     
     def _get_vision_resolution(self):
         # Will be overridden by subclasses

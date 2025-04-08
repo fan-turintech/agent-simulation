@@ -14,8 +14,11 @@ class Grass:
     def render(self, surface):
         pygame.draw.circle(surface, self.color, (int(self.x), int(self.y)), self.size)
 
+    def __repr__(self):
+        return f"grass @ ({self.x}, {self.y})"
+
 class Environment:
-    def __init__(self):
+    def __init__(self, grass_count=Config.MAX_GRASS//2):
         self.grass = []
         self.width = Config.SCREEN_WIDTH
         self.height = Config.SCREEN_HEIGHT
@@ -28,14 +31,14 @@ class Environment:
         self.grass_positions = set()  # Fast lookup for existing grass positions
         
         # Now initialize grass after grid variables are set up
-        self.initialize_grass()
+        self.initialize_grass(grass_count)
         
         # Track grass stats
         self.grass_growth_history = []  # Track growth rate history
     
-    def initialize_grass(self):
+    def initialize_grass(self, grass_count):
         # Create initial grass
-        initial_count = Config.MAX_GRASS // 2
+        initial_count = min(grass_count, Config.MAX_GRASS)
         for _ in range(initial_count):
             self.add_grass()
     

@@ -8,13 +8,13 @@ from environment import Environment
 from creature import Herbivore, Carnivore
 
 class Simulation:
-    def __init__(self):
+    def __init__(self, grass_count=Config.MAX_GRASS//2, herbivore_count=Config.INITIAL_HERBIVORES, carnivore_count=Config.INITIAL_CARNIVORES):
         # Initialize environment
-        self.environment = Environment()
+        self.environment = Environment(grass_count)
         
         # Initialize creatures
         self.creatures = []
-        self.initialize_creatures()
+        self.initialize_creatures(herbivore_count, carnivore_count)
         
         # Statistics
         self.tick = 0
@@ -22,16 +22,16 @@ class Simulation:
         self.carnivore_count_history = []
         self.grass_count_history = []
         
-    def initialize_creatures(self):
+    def initialize_creatures(self, herbivore_count, carnivore_count):
         # Create initial herbivores
-        for _ in range(Config.INITIAL_HERBIVORES):
+        for _ in range(herbivore_count):
             x = random.randint(50, Config.SCREEN_WIDTH - 50)
             y = random.randint(50, Config.SCREEN_HEIGHT - 50)
             herbivore = Herbivore(x, y)
             self.creatures.append(herbivore)
         
         # Create initial carnivores
-        for _ in range(Config.INITIAL_CARNIVORES):
+        for _ in range(carnivore_count):
             x = random.randint(50, Config.SCREEN_WIDTH - 50)
             y = random.randint(50, Config.SCREEN_HEIGHT - 50)
             carnivore = Carnivore(x, y)
