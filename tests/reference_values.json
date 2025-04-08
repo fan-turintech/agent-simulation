@@ -8,7 +8,10 @@
     "grass_peak": 50,
     "herbivore_min": 18,
     "carnivore_min": 5,
-    "grass_min": 44
+    "grass_min": 44,
+    "herbivore_avg": 18.54,
+    "carnivore_avg": 5,
+    "grass_avg": 46.17
   },
   "herbivore_heavy": {
     "final_herbivores": 26,
@@ -19,7 +22,10 @@
     "grass_peak": 48,
     "herbivore_min": 26,
     "carnivore_min": 3,
-    "grass_min": 39
+    "grass_min": 39,
+    "herbivore_avg": 27.16,
+    "carnivore_avg": 3,
+    "grass_avg": 41.59
   },
   "carnivore_heavy": {
     "final_herbivores": 7,
@@ -30,6 +36,9 @@
     "grass_peak": 50,
     "herbivore_min": 7,
     "carnivore_min": 10,
-    "grass_min": 47
+    "grass_min": 47,
+    "herbivore_avg": 7.85,
+    "carnivore_avg": 10,
+    "grass_avg": 48.79
   }
 }
