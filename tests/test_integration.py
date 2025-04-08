@@ -16,9 +16,6 @@ import statistics
 # Add parent directory to path to import simulation modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from simulation import Simulation
-from config import Config
-from creature import Herbivore, Carnivore
-from environment import Environment, Grass
 
 # Fixed seed for reproducibility
 FIXED_SEED = 42
@@ -59,49 +56,6 @@ def create_test_simulation(scenario_name):
     
     # Create new simulation
     simulation = Simulation(scenario["grass"], scenario["herbivores"], scenario["carnivores"])
-    
-    # # Reset creature list
-    # simulation.creatures = []
-    #
-    # # Create herbivores with fixed positions
-    # for i in range(scenario["herbivores"]):
-    #     # Deterministic positioning for reproducibility
-    #     x = Config.SCREEN_WIDTH * (0.1 + 0.8 * i / max(1, scenario["herbivores"]))
-    #     y = Config.SCREEN_HEIGHT * 0.3
-    #     direction = (i * 30) % 360  # Deterministic directions
-    #     herbivore = Herbivore(x, y, direction=direction)
-    #     simulation.creatures.append(herbivore)
-    #
-    # # Create carnivores with fixed positions
-    # for i in range(scenario["carnivores"]):
-    #     # Deterministic positioning for reproducibility
-    #     x = Config.SCREEN_WIDTH * (0.2 + 0.6 * i / max(1, scenario["carnivores"]))
-    #     y = Config.SCREEN_HEIGHT * 0.7
-    #     direction = (i * 45) % 360  # Deterministic directions
-    #     carnivore = Carnivore(x, y, direction=direction)
-    #     simulation.creatures.append(carnivore)
-    #
-    # # Reset environment
-    # simulation.environment.grass = []
-    # simulation.environment.grass_positions = set()
-    #
-    # # Create grass in a deterministic grid pattern
-    # grid_size = int(math.sqrt(scenario["grass"]))
-    # cell_width = Config.SCREEN_WIDTH / (grid_size + 1)
-    # cell_height = Config.SCREEN_HEIGHT / (grid_size + 1)
-    #
-    # for i in range(grid_size):
-    #     for j in range(grid_size):
-    #         if len(simulation.environment.grass) < scenario["grass"]:
-    #             x = cell_width * (i + 1)
-    #             y = cell_height * (j + 1)
-    #             grass = Grass(x, y)
-    #             simulation.environment.grass.append(grass)
-    #
-    #             # Add to position tracking
-    #             pos_key = (int(x) // simulation.environment.grid_size,
-    #                        int(y) // simulation.environment.grid_size)
-    #             simulation.environment.grass_positions.add(pos_key)
     
     return simulation
 
@@ -223,14 +177,7 @@ class TestIntegration:
         assert abs(metrics["herbivore_avg"] - reference["herbivore_avg"]) < 2, "Herbivore avg count differs"
         assert abs(metrics["carnivore_avg"] - reference["carnivore_avg"]) < 2, "Carnivore avg count differs"
         assert abs(metrics["grass_avg"] - reference["grass_avg"]) < 10, "Grass avg count differs"
-        
-        # Check population peaks and lows
-        # assert metrics["herbivore_peak"] == reference["herbivore_peak"], "Herbivore peak differs"
-        # assert metrics["carnivore_peak"] == reference["carnivore_peak"], "Carnivore peak differs"
-        # assert metrics["grass_peak"] == reference["grass_peak"], "Grass peak differs"
-        # assert metrics["herbivore_min"] == reference["herbivore_min"], "Herbivore min differs"
-        # assert metrics["carnivore_min"] == reference["carnivore_min"], "Carnivore min differs"
-        # assert metrics["grass_min"] == reference["grass_min"], "Grass min differs"
+
 
 if __name__ == "__main__":
     # If run directly, just generate reference values

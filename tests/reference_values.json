@@ -2,43 +2,43 @@
   "balanced": {
     "final_herbivores": 18,
     "final_carnivores": 5,
-    "final_grass": 44,
+    "final_grass": 42,
     "herbivore_peak": 20,
     "carnivore_peak": 5,
     "grass_peak": 50,
     "herbivore_min": 18,
     "carnivore_min": 5,
-    "grass_min": 44,
+    "grass_min": 40,
     "herbivore_avg": 18.54,
     "carnivore_avg": 5,
-    "grass_avg": 46.17
+    "grass_avg": 43.46
   },
   "herbivore_heavy": {
     "final_herbivores": 26,
     "final_carnivores": 3,
-    "final_grass": 39,
+    "final_grass": 41,
     "herbivore_peak": 30,
     "carnivore_peak": 3,
-    "grass_peak": 48,
+    "grass_peak": 45,
     "herbivore_min": 26,
     "carnivore_min": 3,
-    "grass_min": 39,
-    "herbivore_avg": 27.16,
+    "grass_min": 36,
+    "herbivore_avg": 27.94,
     "carnivore_avg": 3,
-    "grass_avg": 41.59
+    "grass_avg": 39.99
   },
   "carnivore_heavy": {
-    "final_herbivores": 7,
+    "final_herbivores": 8,
     "final_carnivores": 10,
-    "final_grass": 50,
+    "final_grass": 48,
     "herbivore_peak": 10,
     "carnivore_peak": 10,
     "grass_peak": 50,
-    "herbivore_min": 7,
+    "herbivore_min": 8,
     "carnivore_min": 10,
     "grass_min": 47,
-    "herbivore_avg": 7.85,
+    "herbivore_avg": 8.54,
     "carnivore_avg": 10,
-    "grass_avg": 48.79
+    "grass_avg": 47.9
   }
 }

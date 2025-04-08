@@ -87,31 +87,6 @@ def create_benchmark_state(scenario_name, seed=42):
     # Create a fresh simulation
     simulation = Simulation(scenario["grass"], scenario["herbivores"], scenario["carnivores"])
     
-    # # Clear existing creatures
-    # simulation.creatures = []
-    #
-    # # Create fixed number of herbivores
-    # for i in range(scenario["herbivores"]):
-    #     x = Config.SCREEN_WIDTH * (0.1 + 0.8 * i / scenario["herbivores"])
-    #     y = Config.SCREEN_HEIGHT * (0.3 + 0.4 * (i % 3) / 3)
-    #     herbivore = Herbivore(x, y, direction=random.uniform(0, 360))
-    #     simulation.creatures.append(herbivore)
-    #
-    # # Create fixed number of carnivores
-    # for i in range(scenario["carnivores"]):
-    #     x = Config.SCREEN_WIDTH * (0.2 + 0.6 * i / scenario["carnivores"])
-    #     y = Config.SCREEN_HEIGHT * (0.2 + 0.6 * (i % 3) / 3)
-    #     carnivore = Carnivore(x, y, direction=random.uniform(0, 360))
-    #     simulation.creatures.append(carnivore)
-    #
-    # # Clear existing grass
-    # simulation.environment.grass = []
-    # simulation.environment.grass_positions = set()
-    #
-    # # Create fixed amount of grass
-    # for _ in range(scenario["grass"]):
-    #     simulation.environment.add_grass()
-    
     return simulation
 
 def run_benchmark(simulation, steps, seed=42):
