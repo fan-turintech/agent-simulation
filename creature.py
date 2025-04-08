@@ -108,7 +108,7 @@ class Creature:
         dy = math.sin(angle_rad)
         
         # Cast the ray to check for objects
-        for distance in range(1, self._get_vision_range(), 5):  # Step by 5 for efficiency
+        for distance in range(1, self._get_vision_range(), 2):  # Step by 5 for efficiency
             check_x = self.x + dx * distance
             check_y = self.y + dy * distance
             

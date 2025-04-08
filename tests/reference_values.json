@@ -8,23 +8,23 @@
     "grass_peak": 50,
     "herbivore_min": 18,
     "carnivore_min": 5,
-    "grass_min": 43
+    "grass_min": 44
   },
   "herbivore_heavy": {
-    "final_herbivores": 27,
+    "final_herbivores": 26,
     "final_carnivores": 3,
-    "final_grass": 40,
+    "final_grass": 39,
     "herbivore_peak": 30,
     "carnivore_peak": 3,
     "grass_peak": 48,
-    "herbivore_min": 27,
+    "herbivore_min": 26,
     "carnivore_min": 3,
     "grass_min": 39
   },
   "carnivore_heavy": {
     "final_herbivores": 7,
     "final_carnivores": 10,
-    "final_grass": 49,
+    "final_grass": 50,
     "herbivore_peak": 10,
     "carnivore_peak": 10,
     "grass_peak": 50,
