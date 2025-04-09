@@ -22,9 +22,6 @@ import io
 
 # Import project modules
 from simulation import Simulation
-from config import Config
-from environment import Environment
-from creature import Herbivore, Carnivore
 
 # Benchmark scenarios
 SCENARIOS = {
