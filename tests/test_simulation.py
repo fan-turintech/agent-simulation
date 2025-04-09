@@ -18,17 +18,25 @@ class TestSimulation:
     
     def test_initialization(self):
         """Test simulation initialization"""
-        assert hasattr(self.simulation, 'environment')
+        # Check grass initialization
+        assert hasattr(self.simulation, 'grass')
+        assert isinstance(self.simulation.grass, list)
+        
+        # Check creature initialization
         assert hasattr(self.simulation, 'creatures')
         assert hasattr(self.simulation, 'tick')
         assert self.simulation.tick == 0
         
-        # Check creature initialization
+        # Check creature counts
         herbivores = [c for c in self.simulation.creatures if isinstance(c, Herbivore)]
         carnivores = [c for c in self.simulation.creatures if isinstance(c, Carnivore)]
         
         assert len(herbivores) == Config.INITIAL_HERBIVORES
         assert len(carnivores) == Config.INITIAL_CARNIVORES
+        
+        # Check grass management
+        assert hasattr(self.simulation, 'grass_positions')
+        assert hasattr(self.simulation, 'grid_size')
     
     def test_update(self):
         """Test simulation update"""
@@ -36,6 +44,7 @@ class TestSimulation:
         initial_tick = self.simulation.tick
         initial_herb_count = self.simulation.count_herbivores()
         initial_carn_count = self.simulation.count_carnivores()
+        initial_grass_count = self.simulation.get_grass_count()
         
         # Perform update
         self.simulation.update()
@@ -47,6 +56,24 @@ class TestSimulation:
         assert len(self.simulation.herbivore_count_history) == 1
         assert len(self.simulation.carnivore_count_history) == 1
         assert len(self.simulation.grass_count_history) == 1
+    
+    def test_grass_management(self):
+        """Test grass management functionalities"""
+        # Test adding grass
+        initial_grass = len(self.simulation.grass)
+        self.simulation.add_grass()
+        assert len(self.simulation.grass) > initial_grass
+        
+        # Test removing grass
+        if self.simulation.grass:
+            grass_to_remove = self.simulation.grass[0]
+            self.simulation.remove_grass(grass_to_remove)
+            assert grass_to_remove not in self.simulation.grass
+        
+        # Test grass growth rate calculation
+        growth_rate = self.simulation.calculate_adaptive_growth_rate()
+        assert 0 <= growth_rate <= Config.MAX_GRASS_GROWTH_RATE
+        assert len(self.simulation.grass_growth_history) > 0
     
     def test_population_maintenance(self):
         """Test minimum population maintenance"""
@@ -75,6 +102,50 @@ class TestSimulation:
         
         # Check minimum carnivores spawned
         assert self.simulation.count_carnivores() >= Config.MINIMUM_CARNIVORES
+    
+    def test_sensing(self):
+        """Test sensing capabilities"""
+        # Add a test creature
+        herbivore = Herbivore(100, 100, direction=0)  # Facing right
+        self.simulation.creatures.append(herbivore)
+        
+        # Add some grass in front of the herbivore
+        for _ in range(3):
+            self.simulation.grass = []
+            x = herbivore.x + herbivore.get_vision_range() // 2
+            y = herbivore.y
+            self.simulation.grass.append(self.create_test_grass(x, y))
+            
+            # Test vision
+            inputs = self.simulation.sense_environment_for_creature(herbivore)
+            
+            # Should have vision_resolution + 1 inputs
+            assert len(inputs) == herbivore.get_vision_resolution() + 1
+            # Ensure some vision ray detected grass
+            assert any(i > 0 for i in inputs[:-1]), "Grass should be detected in vision"
+            
+            # Test vision data specifics
+            vision_data = self.simulation.get_vision_for_creature(herbivore)
+            assert len(vision_data) == herbivore.get_vision_resolution()
+            
+            # Add a carnivore and test the herbivore's sensing to make sure it detects danger
+            carnivore = Carnivore(herbivore.x + 30, herbivore.y, direction=180)  # Facing left, towards herbivore
+            self.simulation.creatures.append(carnivore)
+            
+            # Test vision with carnivore
+            inputs = self.simulation.sense_environment_for_creature(herbivore)
+            vision_data = inputs[:-1]  # Exclude energy input
+            
+            # Ensure herbivore detects carnivore (with negative value for danger)
+            assert any(v < 0 for v in vision_data), "Carnivore should be detected as danger"
+    
+    def create_test_grass(self, x, y):
+        """Create a grass instance at specified position and add to grass_positions"""
+        from environment import Grass
+        grass = Grass(x, y)
+        pos_key = (int(x) // self.simulation.grid_size, int(y) // self.simulation.grid_size)
+        self.simulation.grass_positions.add(pos_key)
+        return grass
     
     def test_save_load(self):
         """Test saving and loading simulation state"""

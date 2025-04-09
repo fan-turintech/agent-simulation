@@ -39,8 +39,8 @@ class StatsRecorder:
         self.grass_counts.append(simulation.count_grass())
         
         # Record growth rate if available
-        if hasattr(simulation.environment, 'get_current_growth_rate'):
-            self.grass_growth_rates.append(simulation.environment.get_current_growth_rate())
+        if hasattr(simulation, 'get_current_growth_rate'):
+            self.grass_growth_rates.append(simulation.get_current_growth_rate())
         
         # Record more detailed statistics
         if simulation.creatures:

@@ -2,23 +2,24 @@ import sys
 import os
 import pytest
 import numpy as np
-import random  # Add explicit import for random
+import random
 import math
 
 # Add parent directory to path to import simulation modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from creature import Herbivore, Carnivore
-from environment import Environment, Grass
+from environment import Grass
+from simulation import Simulation
 from config import Config
 
 class TestCreatures:
     """Test cases for Creature classes"""
     
     def setup_method(self):
-        """Set up test creatures"""
+        """Set up test creatures and simulation"""
         self.herbivore = Herbivore(100, 100)
         self.carnivore = Carnivore(200, 200)
-        self.environment = Environment()
+        self.simulation = Simulation(10, 0, 0)  # Create simulation with just grass
     
     def test_initialization(self):
         """Test creature initialization"""
@@ -38,42 +39,10 @@ class TestCreatures:
         assert self.carnivore.age == 0
         assert hasattr(self.carnivore, 'brain')
     
-    def test_sensing(self):
-        """Test creature sensing"""
-        # Set up environment with grass
-        self.environment.grass = []
-        self.environment.add_grass()
-        grass = self.environment.grass[0]
-        
-        # Place herbivore next to grass
-        self.herbivore.x = grass.x - 20
-        self.herbivore.y = grass.y
-        self.herbivore.direction = 0  # East
-        
-        # Get sense inputs
-        inputs = self.herbivore.sense_environment(self.environment, [])
-        
-        # Should have vision_resolution + 1 inputs
-        assert len(inputs) == Config.HERBIVORE_VISION_RESOLUTION + 1
-        
-        # Last input should be normalized energy
-        assert inputs[-1] == self.herbivore.energy / Config.HERBIVORE_MAX_ENERGY
-        
-        # Test carnivore sensing herbivore
-        self.carnivore.x = self.herbivore.x - 30
-        self.carnivore.y = self.herbivore.y
-        self.carnivore.direction = 0  # East
-        
-        # Get sense inputs
-        inputs = self.carnivore.sense_environment(self.environment, [self.herbivore])
-        
-        # Should have vision_resolution + 1 inputs
-        assert len(inputs) == Config.CARNIVORE_VISION_RESOLUTION + 1
-    
     def test_thinking(self):
         """Test creature neural processing"""
         # Create test inputs
-        test_inputs = [0] * (self.herbivore._get_vision_resolution() + 1)
+        test_inputs = [0] * (self.herbivore.get_vision_resolution() + 1)
         
         # Get outputs
         outputs = self.herbivore.think(test_inputs)
@@ -114,22 +83,25 @@ class TestCreatures:
         # Check energy decreased
         assert self.herbivore.energy < initial_energy, "Energy should decrease after act()"
         
-        # Now test eating grass in separate steps
+        # Now test eating grass via simulation update_creature
         self.herbivore.energy = Config.HERBIVORE_MAX_ENERGY / 2  # Set energy to half max
         before_eating = self.herbivore.energy
         
+        # Add herbivore to simulation
+        self.simulation.creatures.append(self.herbivore)
+        
         # Create grass directly at herbivore's position to ensure it gets eaten
         grass = Grass(self.herbivore.x, self.herbivore.y)
-        self.environment.grass = [grass]
-        self.environment.grass_positions = {(int(grass.x) // self.environment.grid_size, 
-                                      int(grass.y) // self.environment.grid_size)}
+        self.simulation.grass = [grass]
+        self.simulation.grass_positions = {(int(grass.x) // self.simulation.grid_size, 
+                                      int(grass.y) // self.simulation.grid_size)}
         
-        # Use update() to trigger grass consumption
-        self.herbivore.update(self.environment, [])
+        # Use update_creature to trigger grass consumption
+        self.simulation.update_creature(self.herbivore)
         
         # Verify energy increased and grass was removed
         assert self.herbivore.energy > before_eating, "Energy should increase after eating grass"
-        assert len(self.environment.grass) == 0, "Grass should be consumed"
+        assert len(self.simulation.grass) == 0, "Grass should be consumed"
     
     def test_reproduction(self):
         """Test creature reproduction"""
@@ -166,20 +138,23 @@ class TestCreatures:
             random.random = original_random_func
     
     def test_predation(self):
-        """Test carnivore hunting herbivores"""
+        """Test carnivore hunting herbivores via simulation update_creature"""
         # Place herbivore next to carnivore
         self.herbivore.x = self.carnivore.x
         self.herbivore.y = self.carnivore.y
+        
+        # Add to simulation
+        self.simulation.creatures = [self.herbivore, self.carnivore]
         
         # Track initial energy
         initial_energy = self.carnivore.energy
         herbivore_energy = self.herbivore.energy
         
-        # Update carnivore (should eat herbivore)
-        self.carnivore.update(self.environment, [self.herbivore])
+        # Update carnivore through simulation (should eat herbivore)
+        self.simulation.update_creature(self.carnivore)
         
         # Carnivore should gain energy (herbivore energy + bonus)
-        expected_gain = min(herbivore_energy + Config.CARNIVORE_HUNT_BONUS_ENERGY,
+        expected_gain = min(herbivore_energy + 100,  # Fixed bonus energy is 100
                            Config.CARNIVORE_MAX_ENERGY - initial_energy)
         
         assert self.carnivore.energy == pytest.approx(initial_energy + expected_gain)

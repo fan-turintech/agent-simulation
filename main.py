@@ -198,7 +198,7 @@ def main():
         font = pygame.font.SysFont('Arial', 16)
         status_text = f"Status: {'Paused' if paused else 'Running'} | Speed: {speed}x | "
         status_text += f"Herbivores: {simulation.count_herbivores()} | Carnivores: {simulation.count_carnivores()} | "
-        status_text += f"Grass: {simulation.count_grass()} | Growth: {simulation.environment.get_current_growth_rate():.2f}"
+        status_text += f"Grass: {simulation.count_grass()} | Growth: {simulation.get_current_growth_rate():.2f}"
         status_surface = font.render(status_text, True, (255, 255, 255))
         screen.blit(status_surface, (10, 10))
         
