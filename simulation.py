@@ -21,6 +21,10 @@ class Simulation:
         self.grid = [[False for _ in range(self.grid_height)] for _ in range(self.grid_width)]
         self.grass_positions = set()  # Fast lookup for existing grass positions
         
+        # Spatial partitioning grids for collision detection
+        self.grass_spatial_grid = {}
+        self.creature_spatial_grid = {}
+        
         # Initialize grass
         self.initialize_grass(grass_count)
         
@@ -37,6 +41,57 @@ class Simulation:
         self.carnivore_count_history = []
         self.grass_count_history = []
         
+    def get_grid_cell(self, x, y):
+        """Convert world coordinates to grid cell coordinates"""
+        grid_x = max(0, min(int(x / self.grid_size), self.grid_width - 1))
+        grid_y = max(0, min(int(y / self.grid_size), self.grid_height - 1))
+        return (grid_x, grid_y)
+        
+    def update_spatial_grids(self):
+        """Update the spatial partitioning grids with current entity positions"""
+        # Clear previous grids
+        self.grass_spatial_grid = {}
+        self.creature_spatial_grid = {}
+        
+        # Add grass to spatial grid
+        for grass in self.grass:
+            grid_pos = self.get_grid_cell(grass.x, grass.y)
+            if grid_pos not in self.grass_spatial_grid:
+                self.grass_spatial_grid[grid_pos] = []
+            self.grass_spatial_grid[grid_pos].append(grass)
+        
+        # Add creatures to spatial grid
+        for creature in self.creatures:
+            grid_pos = self.get_grid_cell(creature.x, creature.y)
+            if grid_pos not in self.creature_spatial_grid:
+                self.creature_spatial_grid[grid_pos] = []
+            self.creature_spatial_grid[grid_pos].append(creature)
+    
+    def get_nearby_entities(self, entity, is_grass=False):
+        """Get entities in the same and adjacent grid cells"""
+        grid_pos = self.get_grid_cell(entity.x, entity.y)
+        nearby = []
+        
+        # Check current cell and all adjacent cells (including diagonals)
+        for dx in [-1, 0, 1]:
+            for dy in [-1, 0, 1]:
+                check_pos = (grid_pos[0] + dx, grid_pos[1] + dy)
+                
+                # Skip out-of-bounds cells
+                if (check_pos[0] < 0 or check_pos[0] >= self.grid_width or 
+                    check_pos[1] < 0 or check_pos[1] >= self.grid_height):
+                    continue
+                
+                # Get entities from appropriate grid
+                if is_grass:
+                    if check_pos in self.grass_spatial_grid:
+                        nearby.extend(self.grass_spatial_grid[check_pos])
+                else:
+                    if check_pos in self.creature_spatial_grid:
+                        nearby.extend(self.creature_spatial_grid[check_pos])
+        
+        return nearby
+    
     def initialize_grass(self, grass_count):
         """Create initial grass"""
         initial_count = min(grass_count, Config.MAX_GRASS)
@@ -69,8 +124,14 @@ class Simulation:
             pos_key = (x // self.grid_size, y // self.grid_size)
             if pos_key not in self.grass_positions:
                 # Add the new grass
-                self.grass.append(Grass(x, y))
+                new_grass = Grass(x, y)
+                self.grass.append(new_grass)
                 self.grass_positions.add(pos_key)
+                
+                # Add to spatial grid
+                if pos_key not in self.grass_spatial_grid:
+                    self.grass_spatial_grid[pos_key] = []
+                self.grass_spatial_grid[pos_key].append(new_grass)
                 return True
                 
             attempts += 1
@@ -84,7 +145,15 @@ class Simulation:
             pos_key = (grass.x // self.grid_size, grass.y // self.grid_size)
             if pos_key in self.grass_positions:
                 self.grass_positions.remove(pos_key)
+            
+            # Remove from grass list
             self.grass.remove(grass)
+            
+            # Remove from spatial grid
+            if pos_key in self.grass_spatial_grid and grass in self.grass_spatial_grid[pos_key]:
+                self.grass_spatial_grid[pos_key].remove(grass)
+                if not self.grass_spatial_grid[pos_key]:  # If no more grass in this cell
+                    del self.grass_spatial_grid[pos_key]
     
     def calculate_adaptive_growth_rate(self):
         """Calculate growth rate based on current grass count"""
@@ -155,6 +224,11 @@ class Simulation:
             y = random.randint(50, Config.SCREEN_HEIGHT - 50)
             herbivore = Herbivore(x, y)
             self.creatures.append(herbivore)
+            # Add to spatial grid
+            grid_pos = self.get_grid_cell(x, y)
+            if grid_pos not in self.creature_spatial_grid:
+                self.creature_spatial_grid[grid_pos] = []
+            self.creature_spatial_grid[grid_pos].append(herbivore)
         
         # Create initial carnivores
         for _ in range(carnivore_count):
@@ -162,6 +236,11 @@ class Simulation:
             y = random.randint(50, Config.SCREEN_HEIGHT - 50)
             carnivore = Carnivore(x, y)
             self.creatures.append(carnivore)
+            # Add to spatial grid
+            grid_pos = self.get_grid_cell(x, y)
+            if grid_pos not in self.creature_spatial_grid:
+                self.creature_spatial_grid[grid_pos] = []
+            self.creature_spatial_grid[grid_pos].append(carnivore)
     
     def update(self):
         # Increment simulation tick
@@ -169,6 +248,9 @@ class Simulation:
         
         # Update grass
         self.update_grass()
+        
+        # Update spatial grids with current positions
+        self.update_spatial_grids()
         
         # Process creature sensing, thinking, and acting
         for creature in self.creatures:
@@ -223,18 +305,20 @@ class Simulation:
         if creature.energy <= 0:
             return False  # Dead
         
-        # Handle feeding behavior based on creature type
+        # Handle feeding behavior based on creature type using spatial partitioning
         if isinstance(creature, Herbivore):
-            # Check for grass consumption
-            for grass in self.grass[:]:  # Create a copy of the list for safe iteration
+            # Check for grass consumption using nearby grass only
+            nearby_grass = self.get_nearby_entities(creature, is_grass=True)
+            for grass in nearby_grass:
                 distance = math.sqrt((creature.x - grass.x)**2 + (creature.y - grass.y)**2)
                 if distance < creature.get_size() + grass.size:
                     creature.energy = min(creature.energy + grass.energy, creature.get_max_energy())
                     self.remove_grass(grass)
         
         elif isinstance(creature, Carnivore):
-            # Check for herbivore hunting
-            for target in self.creatures[:]:  # Create a copy of the list for safe iteration
+            # Check for herbivore hunting using nearby creatures only
+            nearby_creatures = self.get_nearby_entities(creature, is_grass=False)
+            for target in nearby_creatures:
                 if isinstance(target, Herbivore):
                     distance = math.sqrt((creature.x - target.x)**2 + (creature.y - target.y)**2)
                     if distance < creature.get_size() + target.get_size():
@@ -289,43 +373,57 @@ class Simulation:
         dx = math.cos(angle_rad)
         dy = math.sin(angle_rad)
         
-        # Cast the ray to check for objects
-        for distance in range(1, creature.get_vision_range(), 5):  # Step by 5 for efficiency
+        # Precompute grid cells that the ray passes through
+        max_distance = creature.get_vision_range()
+        ray_points = []
+        for distance in range(0, max_distance, 5):  # Step by 5 for efficiency
             check_x = creature.x + dx * distance
             check_y = creature.y + dy * distance
             
-            # Check boundaries
-            if check_x < 0 or check_x >= Config.SCREEN_WIDTH or check_y < 0 or check_y >= Config.SCREEN_HEIGHT:
+            # Stop if out of bounds
+            if (check_x < 0 or check_x >= Config.SCREEN_WIDTH or 
+                check_y < 0 or check_y >= Config.SCREEN_HEIGHT):
                 detection = 0.5  # Edge of screen
                 break
+                
+            # Add point to ray path
+            ray_points.append((check_x, check_y))
             
-            # Check creatures first - they have priority in vision
-            for other in self.creatures:
-                if other != creature:  # Don't detect self
-                    dist = math.sqrt((other.x - check_x)**2 + (other.y - check_y)**2)
-                    if dist < other.get_size():
-                        if isinstance(creature, Herbivore):
-                            if isinstance(other, Carnivore):
-                                detection = -1  # Carnivore: danger
-                            else:
-                                detection = 0.2  # Other herbivores: neutral
-                        else:  # I'm a carnivore
-                            if isinstance(other, Herbivore):
-                                detection = 1  # Herbivore: food
-                            else:
-                                detection = 0.3  # Other carnivores: neutral/competition
-                        break
+        # Check grid cells along ray path
+        visited_cells = set()
+        for point_x, point_y in ray_points:
+            grid_cell = self.get_grid_cell(point_x, point_y)
             
-            # Check grass - only for herbivores
-            if detection == 0 and isinstance(creature, Herbivore):
-                for grass in self.grass:
-                    dist = math.sqrt((grass.x - check_x)**2 + (grass.y - check_y)**2)
+            # Skip already checked cells
+            if grid_cell in visited_cells:
+                continue
+            visited_cells.add(grid_cell)
+            
+            # Check for creatures in this cell
+            if grid_cell in self.creature_spatial_grid:
+                for other in self.creature_spatial_grid[grid_cell]:
+                    if other != creature:  # Don't detect self
+                        dist = math.sqrt((other.x - point_x)**2 + (other.y - point_y)**2)
+                        if dist < other.get_size():
+                            if isinstance(creature, Herbivore):
+                                if isinstance(other, Carnivore):
+                                    detection = -1  # Carnivore: danger
+                                else:
+                                    detection = 0.2  # Other herbivores: neutral
+                            else:  # I'm a carnivore
+                                if isinstance(other, Herbivore):
+                                    detection = 1  # Herbivore: food
+                                else:
+                                    detection = 0.3  # Other carnivores: neutral/competition
+                            return detection
+            
+            # For herbivores, check for grass in this cell
+            if isinstance(creature, Herbivore) and grid_cell in self.grass_spatial_grid:
+                for grass in self.grass_spatial_grid[grid_cell]:
+                    dist = math.sqrt((grass.x - point_x)**2 + (grass.y - point_y)**2)
                     if dist < grass.size:
                         detection = 0.8  # Grass: food for herbivores
-                        break
-            
-            if detection != 0:  # If something was detected, stop the ray
-                break
+                        return detection
                 
         return detection
     
@@ -384,6 +482,12 @@ class Simulation:
             print(f"Spawned new random herbivore (initial energy: {initial_energy})")
             
         self.creatures.append(new_herbivore)
+        
+        # Add to spatial grid
+        grid_pos = self.get_grid_cell(new_herbivore.x, new_herbivore.y)
+        if grid_pos not in self.creature_spatial_grid:
+            self.creature_spatial_grid[grid_pos] = []
+        self.creature_spatial_grid[grid_pos].append(new_herbivore)
     
     def spawn_new_carnivore(self):
         """Spawn a new carnivore by cloning the best carnivore or creating a random one"""
@@ -423,6 +527,12 @@ class Simulation:
             print(f"Spawned new random carnivore (initial energy: {initial_energy})")
             
         self.creatures.append(new_carnivore)
+        
+        # Add to spatial grid
+        grid_pos = self.get_grid_cell(new_carnivore.x, new_carnivore.y)
+        if grid_pos not in self.creature_spatial_grid:
+            self.creature_spatial_grid[grid_pos] = []
+        self.creature_spatial_grid[grid_pos].append(new_carnivore)
     
     def render(self, surface):
         # Render grass
@@ -546,6 +656,9 @@ class Simulation:
             simulation.herbivore_count_history = save_data['herbivore_count_history']
             simulation.carnivore_count_history = save_data['carnivore_count_history']
             simulation.grass_count_history = save_data['grass_count_history']
+            
+            # Rebuild spatial grids after loading
+            simulation.update_spatial_grids()
             
             print(f"Simulation loaded from {filename}")
             return simulation
